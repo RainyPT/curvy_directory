@@ -3,7 +3,7 @@ import requests
 import discord
 from discord.ext import tasks
 
-TOKEN = 'MTIxMTM0NzQyNjA3MDIzNzI1NQ.GpSz5N.l8aizkKjiq5MI8QtqONIDGi4T-2SltNTdyjL1Q'
+TOKEN = ''
 intents = discord.Intents.default()  
 intents.message_content = True
 client = discord.Client(intents=intents)
