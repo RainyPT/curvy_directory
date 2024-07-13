@@ -41,11 +41,15 @@ async def getVintedStuff():
         if(whatIWant!="" and desired_price!=0):
             r1 = requests.get("https://www.vinted.pt/catalog?search_text="+whatIWant+"&order=newest_first")
             r2 = requests.get("https://www.vinted.pt/api/v2/catalog/items?page=1&per_page=1&search_text="+whatIWant+"&order=newest_first&currency=EUR&price_from="+str(min_price)+"&price_to="+str(max_price),cookies=r1.cookies)
-
+            if(r2.status_code!=200):
+                    break
             items=json.loads(r2.text)
             if(len(items['items'])>0): #Sometimes Vinted's API returns 0 items for some reason.
                 newItem=items['items'][0]
                 r3 = requests.get("https://www.vinted.pt/api/v2/users/"+str(newItem["user"]["id"])+"/items?page=1&per_page=1&cond=active&selected_item_id="+str(newItem["id"]),cookies=r1.cookies)
+                if(r3.status_code!=200):
+                    break
+                
                 item = json.loads(r3.text)
                 if(len(item["items"])>0):
                     item=item["items"][0]
@@ -62,3 +66,5 @@ async def getVintedStuff():
                             embed.set_image(url=item['photos'][0]['url'])
                             await channel.send(str(item['id']),embed=embed)
 client.run(TOKEN)
+
+
