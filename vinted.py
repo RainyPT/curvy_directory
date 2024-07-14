@@ -1,22 +1,23 @@
 import json
-import requests
 import discord
 from discord.ext import tasks
+import vintedUtils
+import wallapopUtils
 
-TOKEN = ''
+TOKEN = 'MTIxMTM0NzQyNjA3MDIzNzI1NQ.GMxyQh.HiT5KQloUGfcCC7CvngabN4X4JfmLM8FjE1zbo'
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-teste=[{"name":"iphone","desired_price":350,"max_distance":50,"lastItem":None},
-       {"name":"RTX","desired_price":600,"max_distance":150,"lastItem":None},
-       {"name":"RX","desired_price":600,"max_distance":150,"lastItem":None},
-       {"name":"gaming pc","desired_price":600,"max_distance":250,"lastItem":None}]
+
+# https://api.wallapop.com/api/v3/general/search?shipping=true&min_sale_price=300&max_sale_price=500&filters_source=default_filters&keywords=iphone&order_by=newest
+
 
 @client.event
 async def on_ready():
     print(f'{client.user} has connected to Discord!')
     getVintedStuff.start()
+
 
 @client.event
 async def on_message(message):
@@ -24,47 +25,116 @@ async def on_message(message):
         return
 
     if message.content.startswith("!v"):
-          channel = client.get_channel(1211347578848026636)
-          await channel.send("vinted")
+        channel = client.get_channel(1211347578848026636)
+        await channel.send("vinted")
 
 
 @tasks.loop(seconds=5)
 async def getVintedStuff():
 
     channel = client.get_channel(1211347578848026636)
-    for x in teste:
-        whatIWant=x["name"]
-        desired_price=x["desired_price"]
-        max_distance=x["max_distance"]
-        max_price= desired_price+max_distance
-        min_price= desired_price-max_distance
-        if(whatIWant!="" and desired_price!=0):
-            r1 = requests.get("https://www.vinted.pt/catalog?search_text="+whatIWant+"&order=newest_first")
-            r2 = requests.get("https://www.vinted.pt/api/v2/catalog/items?page=1&per_page=1&search_text="+whatIWant+"&order=newest_first&currency=EUR&price_from="+str(min_price)+"&price_to="+str(max_price),cookies=r1.cookies)
-            if(r2.status_code!=200):
-                    break
-            items=json.loads(r2.text)
-            if(len(items['items'])>0): #Sometimes Vinted's API returns 0 items for some reason.
-                newItem=items['items'][0]
-                r3 = requests.get("https://www.vinted.pt/api/v2/users/"+str(newItem["user"]["id"])+"/items?page=1&per_page=1&cond=active&selected_item_id="+str(newItem["id"]),cookies=r1.cookies)
-                if(r3.status_code!=200):
-                    break
-                
-                item = json.loads(r3.text)
-                if(len(item["items"])>0):
-                    item=item["items"][0]
+    for x in data:
+        whatIWant = x["name"]
+        desired_price = x["desired_price"]
+        max_distance = x["max_distance"]
+        max_price = desired_price+max_distance
+        min_price = desired_price-max_distance
+        if (whatIWant != "" and desired_price != 0):
+
+            if (vintedUtils.getAllItems(whatIWant, min_price, max_price) == None):
+                print("Vinted issue detected. Breaking cycle.")
+                continue
+
+            items = vintedUtils.getAllItems(
+                whatIWant, min_price, max_price).json()
+
+            # Sometimes Vinted's API returns 0 items for some reason.
+            if (len(items['items']) > 0):
+
+                newItem = items['items'][0]
+                if (vintedUtils.getItemInformation(newItem["user"]["id"], newItem["id"]) == None):
+                    print("Vinted issue detected. Breaking cycle.")
+                    continue
+
+                item = vintedUtils.getItemInformation(
+                    newItem["user"]["id"], newItem["id"]).json()
+
+                if (len(item["items"]) > 0):
+                    item = item["items"][0]
                     product_price = float(int(float(item['price']['amount'])))
-                    if x["lastItem"] is None or x["lastItem"]!=str(item['id']):
+                    if x["lastItem"]["vinted"] == 0 or x["lastItem"]["vinted"] != str(item['id']):
                         if x["name"].lower() in item["title"].lower() or x["name"].lower() in item["description"].lower():
-                            x["lastItem"]=str(item['id'])
+                            x["lastItem"]["vinted"] = str(item['id'])
+                            embed = vintedUtils.discordEmbed(item,product_price,min_price,max_price,max_distance,desired_price)
+                            await channel.send(str(item['id']), embed=embed)
 
-                            embed = discord.Embed(title=item['title'],
-                                url=item['url'],colour=discord.Color.from_rgb(int(255 * min((abs(product_price - min_price)) / max_distance, 1.0)), int(255 * min((abs(product_price - desired_price)) / max_distance, 1.0)), int(255 * min((abs(product_price - max_price)) / max_distance, 1.0))))
-                            embed.add_field(name="Price",
-                                            value=item['price']['amount']+" "+item['currency'],
-                                            inline=False)
-                            embed.set_image(url=item['photos'][0]['url'])
-                            await channel.send(str(item['id']),embed=embed)
-client.run(TOKEN)
+            if (wallapopUtils.getAllItems(whatIWant, min_price, max_price) == None):
+                print("Wallapop issue detected. Breaking cycle.")
+                continue
+
+            wallapopItems = wallapopUtils.getAllItems(
+                whatIWant, min_price, max_price).json()
+            if (len(wallapopItems["search_objects"]) > 0):
+                item = wallapopItems["search_objects"][0]
+                product_price = float(int(float(item['price'])))
+                if x["lastItem"]["wallapop"] == 0 or x["lastItem"]["wallapop"] != str(item['id']):
+                    if x["name"].lower() in item["title"].lower() or x["name"].lower() in item["description"].lower():
+                        x["lastItem"]["wallapop"] = str(item['id'])
+
+                        embed = wallapopUtils.discordEmbed(item,product_price,min_price,max_price,max_distance,desired_price)
+                        await channel.send(str(item['id']), embed=embed)
 
 
+def main():
+    print("What do you want to do?\n 1. Run the bot\n 2. Add more items\n 3. Remove items\n\n\n")
+    option = input(": ")
+    global data
+
+    try:
+        r = open('data.json', 'r')
+        data = json.load(r)
+    except FileNotFoundError:
+        with open('data.json', 'w') as file:
+            json.dump([], file)
+            file.close()
+
+        r = open('data.json', 'r')
+        data = json.load(r)
+
+    r.close()
+
+    if (option == "1"):
+        client.run(TOKEN)
+    else:
+        if (option == "2"):
+            name = input("Input name of item: ")
+            desired_price = input("Input desired price: ")
+            maxdistance = input("Input max price offset: ")
+            for x in data:
+                if x["name"] == name:
+                    print("Item already exists!")
+                    return
+            data.append({
+                "name": name,
+                "desired_price": int(desired_price),
+                "max_distance": int(maxdistance),
+                "lastItem": {"vinted": 0, "wallapop": 0}})
+
+            with open('data.json', "w") as f:
+                json.dump(data, f)
+
+            f.close()
+
+        if (option == "3"):
+            name = input("Input name of item:")
+            for x in range(0, len(data)):
+                if (data[x]["name"] == name):
+                    data.pop(x)
+                    with open('data.json', "w") as f:
+                        json.dump(data, f)
+
+            f.close()
+        return
+
+
+main()
