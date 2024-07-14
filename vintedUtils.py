@@ -1,29 +1,30 @@
-import requests
+import aiohttp
 import discord
 
 
-def getAllItems(itemName,min_price,max_price):
-    r1 = requests.get("https://www.vinted.pt/catalog?search_text="+itemName+"&order=newest_first")
-    if(r1.status_code!=200):
-        return None
-    
-    r2 = requests.get("https://www.vinted.pt/api/v2/catalog/items?page=1&per_page=1&search_text="+itemName+"&order=newest_first&currency=EUR&price_from="+str(min_price)+"&price_to="+str(max_price),cookies=r1.cookies)
-    if(r2.status_code!=200):
-        return None
-    
-    return r2
+async def getAllItems(itemName,min_price,max_price):
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://www.vinted.pt/catalog?search_text="+itemName+"&order=newest_first") as r1:
+            if(r1.status!=200):
+                return None
+                            
+            async with session.get("https://www.vinted.pt/api/v2/catalog/items?page=1&per_page=1&search_text="+itemName+"&order=newest_first&currency=EUR&price_from="+str(min_price)+"&price_to="+str(max_price),cookies=r1.cookies) as r2:
+                if(r2.status!=200):
+                    return None
+                return await r2.json()
 
 
-def getItemInformation(userId,itemId):
-    r1 = requests.get("https://www.vinted.pt/catalog?search_text="+str(itemId)+"&order=newest_first")
-    if(r1.status_code!=200):
-        return None
-    
-    r3 = requests.get("https://www.vinted.pt/api/v2/users/"+str(userId)+"/items?page=1&per_page=1&cond=active&selected_item_id="+str(itemId),cookies=r1.cookies)
-    if(r3.status_code!=200):
-        return None
-    
-    return r3
+async def getItemInformation(userId,itemId):
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://www.vinted.pt/catalog?search_text="+str(itemId)+"&order=newest_first") as r1:
+            if(r1.status!=200):
+                return None
+            
+            async with session.get("https://www.vinted.pt/api/v2/users/"+str(userId)+"/items?page=1&per_page=1&cond=active&selected_item_id="+str(itemId),cookies=r1.cookies) as r2:
+                if(r2.status!=200):
+                    return None
+                
+                return await r2.json()
 
 
 def discordEmbed(item,product_price,min_price,max_price,max_distance,desired_price):
