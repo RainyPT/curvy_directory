@@ -4,7 +4,6 @@ from discord.ext import tasks
 import vintedUtils
 import wallapopUtils
 
-TOKEN = ''
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
@@ -104,7 +103,7 @@ def main():
     r.close()
 
     if (option == "1"):
-        client.run(TOKEN)
+        client.run('')
     else:
         if (option == "2"):
             name = input("Input name of item: ")
