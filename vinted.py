@@ -4,7 +4,7 @@ from discord.ext import tasks
 import vintedUtils
 import wallapopUtils
 
-TOKEN = 'MTIxMTM0NzQyNjA3MDIzNzI1NQ.GMxyQh.HiT5KQloUGfcCC7CvngabN4X4JfmLM8FjE1zbo'
+TOKEN = ''
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
