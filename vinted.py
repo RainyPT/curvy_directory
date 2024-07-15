@@ -138,6 +138,8 @@ async def getVintedStuff():
 
                 item = await vintedUtils.getItemInformation(
                     newItem["user"]["id"], newItem["id"])
+                
+                
 
                 if (len(item["items"]) > 0):
                     item = item["items"][0]
@@ -169,6 +171,7 @@ async def getWallapopStuff():
                 item = wallapopItems["search_objects"][0]
                 product_price = float(int(float(item['price'])))
                 if x["lastItem"]["wallapop"] == 0 or x["lastItem"]["wallapop"] != str(item['id']):
+                    
                     if x["name"].lower() in item["title"].lower() or x["name"].lower() in item["description"].lower():
                         x["lastItem"]["wallapop"] = str(item['id'])
 

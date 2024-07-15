@@ -5,7 +5,8 @@ from discord.ext import tasks
 
 async def getAllItems(itemName,min_price,max_price):
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://api.wallapop.com/api/v3/general/search?shipping=true&min_sale_price="+str(min_price)+"&max_sale_price="+str(max_price)+"&filters_source=default_filters&keywords="+itemName+"&order_by=newest",headers={
+        itemName=itemName.replace(" ", "%20")
+        async with session.get("https://api.wallapop.com/api/v3/general/search?time_filter=lastMonth&shipping=true&min_sale_price="+str(min_price)+"&max_sale_price="+str(max_price)+"&filters_source=default_filters&keywords="+itemName+"&order_by=newest",headers={
             'Accept': 'application/json, text/plain, */*',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
                           'AppleWebKit/537.36 (KHTML, like Gecko) '
