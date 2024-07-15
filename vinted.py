@@ -79,9 +79,12 @@ async def on_message(message):
                 await channel.send("Item was not found in list!")
 
             if ("list" in message.content):
-                await channel.send("Here is the list of everything being tracked:")
+                
+                text="Here is the list of everything being tracked:\n"
                 for x in data:
-                    await channel.send(x["name"])
+                    text+=x["name"]+"\n"
+                    
+                await channel.send(text)
 
             if ("run" in message.content):
                 if (getVintedStuff.is_running() == False):
