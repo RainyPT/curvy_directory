@@ -144,7 +144,7 @@ async def getVintedStuff():
                 
                 
 
-                if (len(item["items"]) > 0):
+                if (item!=None and len(item["items"]) > 0):
                     item = item["items"][0]
                     product_price = float(int(float(item['price']['amount'])))
                     if x["lastItem"]["vinted"] == 0 or x["lastItem"]["vinted"] != str(item['id']):
@@ -170,7 +170,7 @@ async def getWallapopStuff():
                 break
 
             wallapopItems = await wallapopUtils.getAllItems(whatIWant, min_price, max_price)
-            if (len(wallapopItems["search_objects"]) > 0):
+            if (wallapopItems!= None and len(wallapopItems["search_objects"]) > 0):
                 item = wallapopItems["search_objects"][0]
                 product_price = float(int(float(item['price'])))
                 if x["lastItem"]["wallapop"] == 0 or x["lastItem"]["wallapop"] != str(item['id']):
