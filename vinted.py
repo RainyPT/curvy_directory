@@ -132,7 +132,7 @@ async def getVintedStuff():
             items = await vintedUtils.getAllItems(whatIWant, min_price, max_price)
 
             # Sometimes Vinted's API returns 0 items for some reason.
-            if (len(items['items']) > 0):
+            if (items!=None and len(items['items']) > 0):
 
                 newItem = items['items'][0]
                 if (await vintedUtils.getItemInformation(newItem["user"]["id"], newItem["id"]) == None):
